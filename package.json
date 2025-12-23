@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "build:lib": "wasm-pack build --target web --release",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
