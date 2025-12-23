@@ -34,7 +34,18 @@ pub fn init_logging() {
 }
 
 #[wasm_bindgen]
-pub fn render_pdf(render_options: JsValue, data: JsValue) -> Result<Vec<u8>, JsValue> {
+pub fn render_pdf(
+    #[wasm_bindgen(
+        js_name = "renderOptions",
+        unchecked_param_type = "{ template: string, font: number[][] }"
+    )]
+    render_options: JsValue,
+    #[wasm_bindgen(
+        js_name = "data",
+        unchecked_param_type = "{ embed: string, items: unknown[] }"
+    )]
+    data: JsValue,
+) -> Result<Vec<u8>, JsValue> {
     let options = RenderOptions::try_from(render_options)?;
 
     let template = TypstEngine::builder()
