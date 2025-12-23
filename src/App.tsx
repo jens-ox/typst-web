@@ -28,10 +28,7 @@ function App() {
 This PDF was generated using Typst in the browser.
 `
 
-      const render_options = { template, font: [fontBytes] }
-      const data = { embed: '', items: [] }
-
-      const pdfBytes = render_pdf(render_options, data)
+      const pdfBytes = render_pdf({ template, fonts: [fontBytes] }, { embed: '', items: [] })
       const blob = new Blob([pdfBytes.buffer as ArrayBuffer], { type: 'application/pdf' })
       const url = URL.createObjectURL(blob)
       window.open(url)

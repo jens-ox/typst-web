@@ -19,9 +19,16 @@ use typst_pdf::PdfOptions;
 const IS_DEBUG: bool = cfg!(debug_assertions);
 
 #[derive(Default, Deserialize)]
+struct AdditionalFile {
+    name: String,
+    content: String,
+}
+
+#[derive(Default, Deserialize)]
 struct RenderOptions {
     template: String,
-    font: Vec<Vec<u8>>,
+    fonts: Option<Vec<Vec<u8>>>,
+    additional_files: Option<Vec<AdditionalFile>>,
 }
 
 #[wasm_bindgen]
@@ -37,7 +44,7 @@ pub fn init_logging() {
 pub fn render_pdf(
     #[wasm_bindgen(
         js_name = "renderOptions",
-        unchecked_param_type = "{ template: string, font: number[][] }"
+        unchecked_param_type = "{ template: string, fonts?: number[][], additional_files?: Array<{ name: string, content: string }> }"
     )]
     render_options: JsValue,
     #[wasm_bindgen(
@@ -48,10 +55,26 @@ pub fn render_pdf(
 ) -> Result<Vec<u8>, JsValue> {
     let options = RenderOptions::try_from(render_options)?;
 
-    let template = TypstEngine::builder()
-        .main_file(options.template.as_str())
-        .fonts(options.font)
-        .build();
+    let mut template_builder = TypstEngine::builder().main_file(options.template.as_str());
+
+    if let Some(fonts) = options.fonts {
+        template_builder = template_builder.fonts(fonts);
+    }
+
+    if let Some(files) = options.additional_files {
+        let static_files = files
+            .into_iter()
+            .map(|file| (file.name, file.content.into_bytes()))
+            .collect::<Vec<_>>();
+
+        template_builder = template_builder.with_static_file_resolver(
+            static_files
+                .iter()
+                .map(|(name, bytes)| (name.as_str(), bytes.as_slice())),
+        );
+    }
+
+    let template = template_builder.build();
 
     let json_value = from_value(data).map_err(log_error)?;
     let input_data = json_to_typst(json_value);
